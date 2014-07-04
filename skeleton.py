@@ -43,17 +43,6 @@ def buildvocab(N):
             break
         ordered_vocab[word[1]] = i
     return ordered_vocab
-    # need to cut vocab list down to N most frequent words
-    # vocab = [0 for i in range(N+1)]
-    # limiter = 0
-    # while len(vocab) > N:
-    #     vocab = [k for k, v in vocab1.items() if v > limiter]
-    #     print len(vocab)
-    #     limiter += 1
-    # ordered_vocab = OrderedDict()
-    # for i, word in enumerate(vocab):
-    #     ordered_vocab[word] = i
-    # return ordered_vocab
 
 
 def vectorize(review, vocab):
@@ -62,7 +51,10 @@ def vectorize(review, vocab):
     # TODO: Create vector representation of
     for word in review:
         if word in vocab:
+            print type(review)
+            print word
             vector[vocab[word]] += 1
+    print vector
     return vector
 
 
@@ -81,7 +73,6 @@ def make_classifier(vocab):
     for i in roots:
         root = cwd + i
         for file_ in os.listdir(root):
-            print file_
             if file_.endswith(".txt"):
                 with open(root + '/' + file_, 'r') as f:
                     for line in f:
@@ -90,21 +81,24 @@ def make_classifier(vocab):
                             if word not in stopwords and word in vocab:
                                 review.append(word)
                 temp_list.append(vectorize(review, vocab))
+                review = []
     X = np.array(temp_list)
-    print X.shape
     lr = LR()
     lr.fit(X, y)
     return lr
 
 
 def test_classifier(lr, vocab):
-    test = np.zeros((len(os.listdir('test')),len(vocab)))
+    test = np.zeros((len(os.listdir('test')), len(vocab)))
     testfn = []
     i = 0
     y = []
     for fn in os.listdir('test'):
         testfn.append(fn)
-        test[i] = vectorize(os.path.join('test',fn), vocab)
+        # test[i] = vectorize(os.path.join('test', fn), vocab)
+        with open(os.path.join('test', fn), 'r') as f:
+            review = f.read()
+        test[i] = vectorize(review.lower().split(), vocab)
         ind = int(fn.split('_')[0][-1])
         y.append(1 if ind == 3 else -1)
         i += 1
@@ -123,6 +117,6 @@ def test_classifier(lr, vocab):
 
 
 if __name__ == '__main__':
-    vocab = buildvocab(10)
+    vocab = buildvocab(100)
     lr = make_classifier(vocab)
     test_classifier(lr, vocab)
